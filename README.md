@@ -59,10 +59,15 @@ Here are some of the wrong predictions with standardization:
 
 ![image4](./img/wrong_predictions.png)
 
+It's understandable to misclassify some images, like the fourth one. I'd say it looks more like a "Y". After standardizaion, the color of some images are so deep that it's hard to tell the digits for human eyes, let's re-run the logistic regression without standardization and see whether the misclassification will stay the same.
+
 Without standardization (this time even with max_iter = 1000, the gradient descent doesn't converge), the images are clearer.
+
 ![image5](./img/no_standardize.png)
 
+Most misclassifications stay the same, but standardization does have an influence, not only on the speed of convergence of gradient descent, but also on performance on certain images. Some misclassification may look ridiculous, but the wrong predictions do actually capture partial patterns. For instance, the first image is predicted to be 0 while the true value is 5, if you take a closer look, the top half of the image does form 75% of 0, and the bottom half is small enough to be negligible. 
 
+I tend to believe such misclassifications are due to unconventional writings that mix patterns of other digits.
 
 ## SVM
 
