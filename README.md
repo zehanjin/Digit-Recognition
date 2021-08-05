@@ -6,11 +6,11 @@ give some credits to the source and show visualization
 
 The MNIST dataset contains XXX examples. Each example is a length 786 vector consisting of discrete values ranging from 0 to 255, each representing the color of a pixel in the corresponding 28 by 28 square image. By converting the vectors into the square matrices and mapping the numbers into colors (using color map __cubehelix__), we get the original look of the digits:
 
-![image](./img/digits.png)
+![image1](./img/digits.png)
 
 After standardization, the color of the images change:
 
-![image](./img/scaled_digits.png)
+![image2](./img/scaled_digits.png)
 
 
 ## Model List
@@ -27,11 +27,8 @@ To begin with, I built KNN algorithm myself following the logic below:
 steps:
 
 1. for each test data, calculate its distance from all train data
-
 2. sort the distances
-
 3. find the nearest k train data 
-
 4. predict test data based on the most common label among the k train data
 
 The code I wrote worked fine but it was too slow when dealing with over 40k+ data. There is still room for data structure and sorting algorithm optimization. 
@@ -39,6 +36,32 @@ The code I wrote worked fine but it was too slow when dealing with over 40k+ dat
 Next, I directly used the scikit-learn package. It contains built-in cross validation and grid search method for finding the optimal value of k, pretty convenient.
 
 ## Logistic Regression
+
+To use Logistic Regression with scikit-learn package is simple. The common procedure is:
+
+steps:
+
+1. import the model from sklearn
+2. create an instance with proper parameters
+3. fit the model with train data
+4. predict on test data
+
+The problem here is which solver to use and convergence with gradient descent. The trade-off here is that the solver that converges faster tends to be expensive as it uses more data to calculate gradients. I decided to use the default solver 'lbfgs' allowed up to 1000 iterations for convergence.
+
+If you're interested, you can refer to the [sci-kit learn documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html) to know more about difference between solvers, or take a look at an intuitive explanation first from this [blog](https://medium.com/distributed-computing-with-ray/how-to-speed-up-scikit-learn-model-training-aaf17e2d1e1).
+
+The confusion matrix:
+![image3](./img/cm.png)
+
+I'm actually more interested in the wrong prediction than the accuracy. I wonder whether the algorithm is problematic to certain samples or it's simply due to awful writing. 
+
+Here are some of the wrong predictions with standardization:
+
+![image4](./img/wrong_predictions.png)
+
+Without standardization (this time even with max_iter = 1000, the gradient descent doesn't converge), the images are clearer.
+![image5](./img/no_standardize.png)
+
 
 
 ## SVM
