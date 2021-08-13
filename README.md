@@ -1,48 +1,54 @@
 # Digit-Recognition
-I tried three classification models on the MNIST dataset and created an interactive panel for the user to draw a digit, then used the best model to recognize it. This project itself is trivial , but in the process of actually implementing it, I realized that there are lots of details worth noticing.
+With data from MNIST dataset, I built classification models with accuracy over ... using KNN, logistic regression, SVM, and created an interactive interface where you can draw a single digit which will be later recognized by these models using pygame. Demo:
+![demo]()
 
 ## Dataset
-Data comes from the MNIST database. The creator of this database tested many models and you can refer to [this paper](http://yann.lecun.com/exdb/mnist/) for more information.
+Dataset comes from the MNIST database. The creator of this database tested many models and you can refer to [this paper](http://yann.lecun.com/exdb/mnist/) for more information. It can be loaded using tensorflow.
 
-There are 60000 training images and 10000 testing images, each image consists of 28*28 pixels and is stored as a one-dimensional vector whose entries correspond to the color of the pixels in greyscale. The entries range from 0 to 255, typical 8-bit images. Here are the first few images:
+```python
+import tensorflow as tf
+(X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
+```
 
-![image1](./img/digits.png)
+There are 60000 training data and 10000 testing data, each data point is a 28 by 28 matrix whose entries (integers ranging from 0 to 255) represents the color of pixels in grayscale in the corresponding 28 by 28 digit image. Demo:
 
-The dataset is relatively large, I find the training process extremly slow when doing cross validation and grid search to fine tune the hyperparameters. I have two solutions:
+![digits](./img/digits.png)
 
-1. Simply take a subset of the whole dataset. Just make sure the subset maintains the original distribution of digits, i.e. the proportion of each digit doesn't change too much after taking the subset, otherwise we may lose information about certain digits (though unlikely, it's totally possible to have only 1% of the digits being 0 if we randomly subsetting)
-2. This is the trick I used in my freshman year and it helped me obtain 100/100 in a CS assignment. The main idea is to reduce the size of each data while maintain as much information as possible. For each data in its 28*28 image form, we can remove every other row and column, you would still be able to recognize what digit it is, so does the machine. We halve the size of the data but the unique patterns of the digit that models learn are still there. 
+## The <sub>shrunken</sub> trick
+When I was just mess with different models, sometimes the tuning process with cross validation took an extremely long time. I know the more training data there are, the better it is for the model, but can I do something to reduce the training time without undermining accuracy too much? Here is a trick I used in my freshman year, it's simple but helped me obtain a full mark in a CS assignment. 
 
+The idea to shrink the size of each training digit matrix by removing every other row and column, in other words, keeping only the odd rows and columns. The size of the matrix becomes a quarter of the orignal, but the major characteristics of the digits are still recognizable, it just gets slightly blurred. Demo:
 
+![shrunken](./img/shrunken.png)
 
-After standardization, the color of the images change:
+A lower accuracy is anticipated, but if the reduction in running time only compromises accuracy in an acceptable level, we may consider using __shrunken__ version of data to save us some time. This is the comparison between using the original data and the shrunken data on KNN:
 
-![image2](./img/scaled_digits.png)
+![comparison](./img/comparison.png)
 
+The accuracy decreased by about 1% but the running time more than halved, I decide to use the __shrunken__ data afterwards. But of course, if you don't care about how long the training process takes or you have a better hardware, it's better to use the original data as it contains more information.
 
 ## Model List
 - [KNN](#knn)
 - [Logistic Regression](#logistic-regression)
 - [SVM](#svm)
 
+### KNN
+K-nearest neighbors, aka KNN, is an intuitive model whose logic is that close data points (measured by distance) tend to have the same label. This non-parametric model simply predicts the label of a new data point to be the most common one from the nearest K data. It's easy to understand and implement. KNN is sensitive to outliers because distance is the only measurement, thus it's important to find the optimal number of K (number of neighbors) to adjust the flexibility in the bias-variance tradeoff. 
 
-## KNN
-K-nearest neighbors, aka KNN, is an intuitive model. The logic behind is that data with similar features normally share the same label (for classification) or have close target values (for regression). Naive as it seems, it can actually perform pretty well in general settings. One of the sad things about this model is that we can't actually learn anything from it, but if we only care about accuracy, it might be a good choice. 
+K-nearest neighbors, aka KNN, is an intuitive model whose logic is that close data points tend to have the same label. It's sensitive to outliers, thus it's important to find the right K to make sure the model is both flexible enough and able to rule out the noise from outliers. I don't think it's necessary to standardize the data with KNN because all features (color of pixels) are homogeneous, no one will have dominant influence.
 
-To begin with, I built KNN algorithm myself following the logic below:
+I tried to build KNN myself:
 
 steps:
 
-1. for each test data, calculate its distance from all train data
+1. for each test data, calculate its (Euclidean) distance from all train data
 2. sort the distances
 3. find the nearest k train data 
 4. predict test data based on the most common label among the k train data
 
-The code I wrote worked fine but it was too slow when dealing with over 40k+ data. There is still room for data structure and sorting algorithm optimization. 
+It worked fine but it's extremely slow when dealing with such a large dataset, let alone doing cross validation and parameter tuning. There's still room to optimize sorting algorithm and memory usage (or data strucutre for storing previous data?), but that's not the focus of this project. Next, all will be done with scikit-learn package.
 
-Next, I directly used the scikit-learn package. It contains built-in cross validation and grid search method for finding the optimal value of k. I also examined the effects of standardizing the data on KNN, it turned out 
-
-## Logistic Regression
+### Logistic Regression
 
 To use Logistic Regression with scikit-learn package is simple. The common procedure is:
 
@@ -53,20 +59,16 @@ steps:
 3. fit the model with train data
 4. predict on test data
 
-The problem here is which solver to use and convergence with gradient descent. The trade-off here is that the solver that converges faster tends to be expensive as it uses more data to calculate gradients. I decided to use the default solver 'lbfgs' allowed up to 1000 iterations for convergence.
+The problem here is which solver to use and how to make gradient descent to converge. Parameter tuning can be eaily achieved with the help of GridSearchCV.
+
+```python
+
+```
 
 If you're interested, you can refer to the [sci-kit learn documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html) to know more about difference between solvers, or take a look at an intuitive explanation first from this [blog](https://medium.com/distributed-computing-with-ray/how-to-speed-up-scikit-learn-model-training-aaf17e2d1e1).
 
 The confusion matrix:
 ![image3](./img/cm.png)
-
-I'm actually more interested in the wrong prediction than the accuracy. I wonder whether the algorithm is problematic to certain samples or it's simply due to awful writing. 
-
-Here are some of the wrong predictions with standardization:
-
-![image4](./img/wrong_predictions.png)
-
-It's understandable to misclassify some images, like the fourth one. I'd say it looks more like a "Y". After standardizaion, the color of some images are so deep that it's hard to tell the digits for human eyes, let's re-run the logistic regression without standardization and see whether the misclassification will stay the same.
 
 Without standardization (this time even with max_iter = 1000, the gradient descent doesn't converge), the images are clearer.
 
@@ -76,9 +78,31 @@ Most misclassifications stay the same, but standardization does have an influenc
 
 I believe such misclassifications are due to unconventional writings that mix patterns of other digits.
 
-## SVM
+### SVM
 
 There are more parameters to fine-tune, like the value of C and gamma, which kernel to use, etc.. We can use GridSearchCV to facilitate the search process. Note that if we wish to standardize the data, it's better to use pipeline to combine the scale process with the SVM building process. If we directly standardizae the whole dataset, later in the cross validation, the test fold will contain information from the train set, which is not desired. 
+
+```python
+
+```
+
+## Questions you may ask
+
+### Should I standardize or normalize the data?
+
+
+After standardization, the color of the images change:
+
+![image2](./img/scaled_digits.png)
+
+I'm actually more interested in the wrong prediction than the accuracy. I wonder whether the algorithm is problematic to certain samples or it's simply due to awful writing. 
+
+Here are some of the wrong predictions with standardization:
+
+![image4](./img/wrong_predictions.png)
+
+It's understandable to misclassify some images, like the fourth one. I'd say it looks more like a "Y". After standardizaion, the color of some images are so deep that it's hard to tell the digits for human eyes, let's re-run the logistic regression without standardization and see whether the misclassification will stay the same.
+
 
 ## Conclusion
 
