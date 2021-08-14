@@ -27,6 +27,10 @@ A lower accuracy is anticipated, but if the reduction in running time only compr
 
 The accuracy decreased by about 1% but the running time more than halved, I decide to use the __shrunken__ data afterwards. But of course, if you don't care about how long the training process takes or you have a better hardware, it's better to use the original data as it contains more information.
 
+Moreover, for a faster convergence in logistic regression and svm, we may want to standardize the data, this is the effect of standardization on __Shrunken__ dataset:
+
+![standardization](./img/standardization.png)
+
 ## Model List
 - [KNN](#knn)
 - [Logistic Regression](#logistic-regression)
@@ -59,41 +63,38 @@ steps:
 3. fit the model with train data
 4. predict on test data
 
-The problem here is which solver to use and how to make gradient descent to converge. Parameter tuning can be eaily achieved with the help of GridSearchCV.
-
-```python
-
-```
+The problems here are which solver to use, how to make gradient descent to converge, what regularization to choose, etc.. Parameter tuning can be eaily achieved with the help of LogisticRegressionCV. 
 
 If you're interested, you can refer to the [sci-kit learn documentation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html) to know more about difference between solvers, or take a look at an intuitive explanation first from this [blog](https://medium.com/distributed-computing-with-ray/how-to-speed-up-scikit-learn-model-training-aaf17e2d1e1).
 
-The confusion matrix:
-![image3](./img/cm.png)
+Finding the optimal using the most rigourous approach in every step is time-costly, we can sometimes take sub-optimal path and it won't hurt too much, but the save on time is significant. For instance, convergence is always a big problem, but from the following graph we see even though logistic regression doesn't converge until over 350 iterations, its performance is already the best in 100 iterations. So maybe we don't need a complete gradient descent if we care more about running time.
 
-Without standardization (this time even with max_iter = 1000, the gradient descent doesn't converge), the images are clearer.
-
-![image5](./img/no_standardize.png)
-
-Most misclassifications stay the same, but standardization does have an influence, not only on the speed of convergence of gradient descent, but also on performance on certain images. Some misclassification may look ridiculous, but the wrong predictions do actually capture partial patterns. For instance, the first image is predicted to be 0 while the true value is 5, if you take a closer look, the top half of the image does form 75% of 0, and the bottom half is small enough to be negligible. 
-
-I believe such misclassifications are due to unconventional writings that mix patterns of other digits.
+![max_iter](./img/max_iter.png)
 
 ### SVM
 
-There are more parameters to fine-tune, like the value of C and gamma, which kernel to use, etc.. We can use GridSearchCV to facilitate the search process. Note that if we wish to standardize the data, it's better to use pipeline to combine the scale process with the SVM building process. If we directly standardizae the whole dataset, later in the cross validation, the test fold will contain information from the train set, which is not desired. 
+There are more parameters to fine-tune, like the value of C and gamma, which kernel to use, etc.. We can use GridSearchCV to facilitate the search process. Note that the correct way to standardize the data with cross validation is to standardize test fold and train fold separately, otherwise test fold will contain information from the train fold, so you shouldn't standardize the whole training set directly and use cross validation. This can be done using pipeline.
 
 ```python
-
+steps = [('scaler', StandardScaler()), ('svm', SVC(kernel='rbf'))]
+pipeline = Pipeline(steps)
+parameters = {'svm__C':[0.1,1,10], 'svm__gamma':[0.01, 0.1,1,10]}
+svm_gscv = GridSearchCV(pipeline, param_grid=parameters, cv=5)
+svm_gscv.fit(X_train, y_train)
+svm_gscv.best_params_
 ```
 
-## Questions you may ask
+## Some little things
 
-### Should I standardize or normalize the data?
+### Confusion matrix
 
+Here are the confusion matrices for all three models. 
 
-After standardization, the color of the images change:
+![cm](./img/cm.png)
 
-![image2](./img/scaled_digits.png)
+A rough look tells us that all models perform relatively bad on digit 9 (maybe it's easy to mistake it as 0 if the top half is too large and 7 is the circle is not drawn properly). Each model has its own strength in predicting certain numbers.
+
+### Wrong prediction
 
 I'm actually more interested in the wrong prediction than the accuracy. I wonder whether the algorithm is problematic to certain samples or it's simply due to awful writing. 
 
@@ -103,6 +104,7 @@ Here are some of the wrong predictions with standardization:
 
 It's understandable to misclassify some images, like the fourth one. I'd say it looks more like a "Y". After standardizaion, the color of some images are so deep that it's hard to tell the digits for human eyes, let's re-run the logistic regression without standardization and see whether the misclassification will stay the same.
 
+### Which digits are predicted wrongly?
 
 ## Conclusion
 
