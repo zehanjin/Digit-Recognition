@@ -2,7 +2,7 @@
 With data from MNIST dataset, I built classification models with accuracy over 96% using KNN, logistic regression, SVM, and created an interactive interface where you can draw a single digit which will be later recognized by these models using pygame. Demo:
 
 
-![demo](./img/demo.gif)
+![demo](./img/pygame.gif)
 
 
 
