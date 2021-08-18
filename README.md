@@ -1,6 +1,10 @@
 # Digit-Recognition
-With data from MNIST dataset, I built classification models with accuracy over ... using KNN, logistic regression, SVM, and created an interactive interface where you can draw a single digit which will be later recognized by these models using pygame. Demo:
-![demo]()
+With data from MNIST dataset, I built classification models with accuracy over 96% using KNN, logistic regression, SVM, and created an interactive interface where you can draw a single digit which will be later recognized by these models using pygame. Demo:
+
+
+![demo](./img/demo.gif)
+
+
 
 ## Dataset
 Dataset comes from the MNIST database. The creator of this database tested many models and you can refer to [this paper](http://yann.lecun.com/exdb/mnist/) for more information. It can be loaded using tensorflow.
@@ -12,14 +16,14 @@ import tensorflow as tf
 
 There are 60000 training data and 10000 testing data, each data point is a 28 by 28 matrix whose entries (integers ranging from 0 to 255) represents the color of pixels in grayscale in the corresponding 28 by 28 digit image. Demo:
 
-![digits](./img/digits.png)
+![digit](./img/digits.png)
 
 ## The <sub>shrunken</sub> trick
 When I was just mess with different models, sometimes the tuning process with cross validation took an extremely long time. I know the more training data there are, the better it is for the model, but can I do something to reduce the training time without undermining accuracy too much? Here is a trick I used in my freshman year, it's simple but helped me obtain a full mark in a CS assignment. 
 
 The idea to shrink the size of each training digit matrix by removing every other row and column, in other words, keeping only the odd rows and columns. The size of the matrix becomes a quarter of the orignal, but the major characteristics of the digits are still recognizable, it just gets slightly blurred. Demo:
 
-![shrunken](./img/shrunken.png)
+![shrunken](./img/shrunken_digits.png)
 
 A lower accuracy is anticipated, but if the reduction in running time only compromises accuracy in an acceptable level, we may consider using __shrunken__ version of data to save us some time. This is the comparison between using the original data and the shrunken data on KNN:
 
@@ -29,7 +33,7 @@ The accuracy decreased by about 1% but the running time more than halved, I deci
 
 Moreover, for a faster convergence in logistic regression and svm, we may want to standardize the data, this is the effect of standardization on __Shrunken__ dataset:
 
-![standardization](./img/standardization.png)
+![standardization](./img/standardized_digits.png)
 
 ## Model List
 - [KNN](#knn)
@@ -94,21 +98,20 @@ Here are the confusion matrices for all three models.
 
 A rough look tells us that all models perform relatively bad on digit 9 (maybe it's easy to mistake it as 0 if the top half is too large and 7 is the circle is not drawn properly). Each model has its own strength in predicting certain numbers.
 
-### Wrong prediction
+### Which digits are predicted wrongly?
 
 I'm actually more interested in the wrong prediction than the accuracy. I wonder whether the algorithm is problematic to certain samples or it's simply due to awful writing. 
 
-Here are some of the wrong predictions with standardization:
+Here are some wrong predictions with standardization:
 
-![image4](./img/wrong_predictions.png)
+![wp](./img/wrong_predictions.png)
 
-It's understandable to misclassify some images, like the fourth one. I'd say it looks more like a "Y". After standardizaion, the color of some images are so deep that it's hard to tell the digits for human eyes, let's re-run the logistic regression without standardization and see whether the misclassification will stay the same.
-
-### Which digits are predicted wrongly?
+It's understandable to misclassify some images, I don't know what the third is and I'd say the fourth is 1 as well. However, I don't think such examples are useless or even harmful to the model, because we all know that awful writing will happen in real life. What use does it have to own a model only predicts pretty digits well? It won't be applicable in real life. We should be focusing on improving the model.
 
 ## Conclusion
 
-In terms of accuracy and speed, the performance of the three models is:
+It turns out the laziest KNN model has the highest test accuracy, but it doesn't mean much because it's not a fair play after all. In order to make the training process faster, we only used the __Shrunken__ data, the performance of other two models may increase after using all the data we have. Besides, I believe there are better ways to shrink the data than simply striping them, like using SVD (Singluar Value Decomposition), but let's save it for another day. 
 
+The performances of all three models are not desirable, sometimes the most clear writing will be mistaken. Where the digit is written, how large it is, in what style it is, these are all factors to which the models are sensitive. It shows these models haven't captured all the patterns from the data, or the tuning process is far from complete. 
 
-
+Nevertheless, this is a start. Other machine learning projects aren't too different from this one, the core is to find patterns within the data.
